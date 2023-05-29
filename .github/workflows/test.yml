@@ -10,18 +10,10 @@ on:
       - master
 
 jobs:
-  test:
-    name: Test image
+  test-debian:
+    name: Test Debian
 
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        dockerfile:
-          - Dockerfile
-          - Dockerfile.alpine
-
     steps:
       - uses: actions/checkout@v3
 
@@ -34,6 +26,7 @@ jobs:
           echo "nomad=$(cat nomad-version)" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
+        id: docker-setup
         uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
@@ -44,8 +37,46 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: local/nomad
-          tags: |
-            type=raw,value=test
+          tags: type=raw,value=test
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ steps.docker-setup.outputs.platforms }}
+          build-args: |-
+            NOMAD_VERSION=${{ steps.meta.outputs.nomad }}
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          load: true
+
+      - name: Try to run the Docker image
+        run: make test DOCKER_TAG=${{ steps.docker-meta.outputs.tags }}
+
+  test-alpine:
+    name: Test Alpine
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Lint the Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile.alpine
+
+      - name: Metadata
+        id: meta
+        run: |
+          echo "nomad=$(cat nomad-version)" >> $GITHUB_OUTPUT
+
+      - name: Docker metadata
+        id: docker-meta
+        uses: docker/metadata-action@v4
+        with:
+          images: local/nomad
+          tags: type=raw,value=test
 
       - name: Build and push
         uses: docker/build-push-action@v4
@@ -59,6 +90,4 @@ jobs:
           load: true
 
       - name: Try to run the Docker image
-        run: |
-          docker run --rm ${{ steps.docker-meta.outputs.tags }} version
-          docker run --rm ${{ steps.docker-meta.outputs.tags }} agent -help
+        run: make test DOCKER_TAG=${{ steps.docker-meta.outputs.tags }}

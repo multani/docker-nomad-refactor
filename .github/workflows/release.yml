@@ -21,12 +21,10 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
 
       - name: Build the Docker image
-        run: make build DOCKER_TAG=test
+        run: make build
 
       - name: Try to run the Docker image
-        run: |
-          docker run --rm test version
-          docker run --rm test agent -help
+        run: make test
 
   release:
     name: Release

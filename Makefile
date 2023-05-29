@@ -8,3 +8,7 @@ all: build
 .PHONY: build
 build:
 	docker build --file $(DOCKERFILE) --tag "$(DOCKER_TAG)" --build-arg NOMAD_VERSION="$(NOMAD_VERSION)" .
+
+test:
+	docker run --rm "$(DOCKER_TAG)" version
+	docker run --rm "$(DOCKER_TAG)" agent -help
