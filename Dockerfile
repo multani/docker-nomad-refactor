@@ -51,6 +51,8 @@ RUN apt-get update \
       unzip \
   && rm -rf /var/lib/apt/lists/*
 
+RUN nomad version
+
 EXPOSE 4646 4647 4648 4648/udp
 
 COPY start.sh /usr/local/bin/
