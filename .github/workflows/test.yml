@@ -1,0 +1,64 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Test image
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        dockerfile:
+          - Dockerfile
+          - Dockerfile.alpine
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Lint the Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+
+      - name: Metadata
+        id: meta
+        run: |
+          echo "nomad=$(cat nomad-version)" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Docker metadata
+        id: docker-meta
+        uses: docker/metadata-action@v4
+        with:
+          images: local/nomad
+          tags: |
+            type=raw,value=test
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          build-args: |-
+            NOMAD_VERSION=${{ steps.meta.outputs.nomad }}
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          load: true
+
+      - name: Try to run the Docker image
+        run: |
+          docker run --rm ${{ steps.docker-meta.outputs.tags }} version
+          docker run --rm ${{ steps.docker-meta.outputs.tags }} agent -help

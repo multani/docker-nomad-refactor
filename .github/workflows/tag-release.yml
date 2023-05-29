@@ -1,19 +1,17 @@
-name: Docker build
+name: Tag Release
 
 on:
   push:
-    branches:
-      - master
-
-  pull_request:
-    branches:
-      - master
+    paths:
+      - nomad-version
 
 jobs:
-  test:
-    name: Test the Docker image
-
+  test-and-tag:
+    name: Test and Tag
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # create new tags
 
     steps:
       - uses: actions/checkout@v3
@@ -28,3 +26,6 @@ jobs:
         run: |
           docker run --rm test version
           docker run --rm test agent -help
+
+      - name: Create tag
+        run: ./.github/actions/create-tag.sh
