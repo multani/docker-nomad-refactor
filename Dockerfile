@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM debian:bookworm-slim
+FROM --platform=$TARGETPLATFORM debian:bookworm-slim
 
 # Fetch the target information injected by Docker build
 ARG TARGETOS
