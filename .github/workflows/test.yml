@@ -28,6 +28,8 @@ jobs:
       - name: Set up QEMU
         id: docker-setup
         uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -53,7 +55,7 @@ jobs:
       - name: Test
         run: make test DOCKER_TAG=${{ steps.docker-meta.outputs.tags }}
 
-      - name: Build amd64
+      - name: Build all platforms
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -62,18 +64,7 @@ jobs:
             NOMAD_VERSION=${{ steps.meta.outputs.nomad }}
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
-          platforms: linux/amd64
-
-      - name: Build arm64
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: Dockerfile
-          build-args: |-
-            NOMAD_VERSION=${{ steps.meta.outputs.nomad }}
-          tags: ${{ steps.docker-meta.outputs.tags }}
-          labels: ${{ steps.docker-meta.outputs.labels }}
-          platforms: linux/arm64
+          platforms: ${{ steps.docker-setup.outputs.platforms }}
 
   test-alpine:
     name: Test Alpine
