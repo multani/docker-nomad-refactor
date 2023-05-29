@@ -39,20 +39,30 @@ jobs:
           images: local/nomad
           tags: type=raw,value=test
 
-      - name: Build and push
+      - name: Build
         uses: docker/build-push-action@v4
         with:
           context: .
           file: Dockerfile
-          platforms: ${{ steps.docker-setup.outputs.platforms }}
           build-args: |-
             NOMAD_VERSION=${{ steps.meta.outputs.nomad }}
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
-          load: true
 
-      - name: Try to run the Docker image
+      - name: Test
         run: make test DOCKER_TAG=${{ steps.docker-meta.outputs.tags }}
+
+      - name: Build all platforms
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          build-args: |-
+            NOMAD_VERSION=${{ steps.meta.outputs.nomad }}
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          platforms: ${{ steps.docker-setup.outputs.platforms }}
+          load: true
 
   test-alpine:
     name: Test Alpine
@@ -78,7 +88,7 @@ jobs:
           images: local/nomad
           tags: type=raw,value=test
 
-      - name: Build and push
+      - name: Build
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -89,5 +99,5 @@ jobs:
           labels: ${{ steps.docker-meta.outputs.labels }}
           load: true
 
-      - name: Try to run the Docker image
+      - name: Test
         run: make test DOCKER_TAG=${{ steps.docker-meta.outputs.tags }}
