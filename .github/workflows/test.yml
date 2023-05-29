@@ -48,6 +48,7 @@ jobs:
             NOMAD_VERSION=${{ steps.meta.outputs.nomad }}
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
+          load: true
 
       - name: Test
         run: make test DOCKER_TAG=${{ steps.docker-meta.outputs.tags }}
@@ -62,7 +63,6 @@ jobs:
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
           platforms: ${{ steps.docker-setup.outputs.platforms }}
-          load: true
 
   test-alpine:
     name: Test Alpine
@@ -80,13 +80,6 @@ jobs:
         id: meta
         run: |
           echo "nomad=$(cat nomad-version)" >> $GITHUB_OUTPUT
-
-      - name: Docker metadata
-        id: docker-meta
-        uses: docker/metadata-action@v4
-        with:
-          images: local/nomad
-          tags: type=raw,value=test
 
       - name: Build
         uses: docker/build-push-action@v4
